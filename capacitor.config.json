@@ -1,0 +1,10 @@
+{
+  "appId": "com.aidialer.app",
+  "appName": "AI DIALER",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}
+
