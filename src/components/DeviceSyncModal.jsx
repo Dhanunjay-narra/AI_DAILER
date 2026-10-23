@@ -239,3 +239,4 @@ export function DeviceSyncModal({ isOpen, onClose }) {
     </div>
   );
 }
+

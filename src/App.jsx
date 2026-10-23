@@ -1,8 +1,5 @@
 import React, { useState } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
-import { SplashModal } from './components/SplashModal';
-import { AuthModal } from './components/AuthModal';
-import { LanguageSelectorModal } from './components/LanguageSelectorModal';
 import { Header } from './components/Header';
 import { BottomNav } from './components/BottomNav';
 import { ChatView } from './components/ChatView';
@@ -15,38 +12,23 @@ import { CategorySetupModal } from './components/CategorySetupModal';
 import { InboundCallModal } from './components/InboundCallModal';
 import { OutboundCustomCallModal } from './components/OutboundCustomCallModal';
 import { DatabaseModal } from './components/DatabaseModal';
-import { DeviceSyncModal } from './components/DeviceSyncModal';
+import { OnboardingFlow } from './components/OnboardingFlow';
+import { LanguageSelectorModal } from './components/LanguageSelectorModal';
 
 function MainAppContent() {
   const { user, activeTab } = useApp();
 
-  // Splash screen state: show on startup
-  const [showSplash, setShowSplash] = useState(true);
-
-  // Auth modal: open if user is not logged in after splash
-  const [showAuthModal, setShowAuthModal] = useState(false);
-
-  // Language modal state
+  // Modals
+  const [showCategorySetup, setShowCategorySetup] = useState(false);
+  const [showCustomDialer, setShowCustomDialer] = useState(false);
+  const [showDatabaseModal, setShowDatabaseModal] = useState(false);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
 
-  // Category setup modal state
-  const [showCategorySetup, setShowCategorySetup] = useState(false);
-
-  // Custom Outbound Call modal state
-  const [showCustomDialer, setShowCustomDialer] = useState(false);
-
-  // Database modal state
-  const [showDatabaseModal, setShowDatabaseModal] = useState(false);
-
-  // Device Sync modal state
-  const [showDeviceSync, setShowDeviceSync] = useState(false);
-
-  const handleSplashComplete = () => {
-    setShowSplash(false);
-    if (!user) {
-      setShowAuthModal(true);
-    }
-  };
+  // If user is not logged in, show the clean 3-step Onboarding Flow
+  // Step 1: Splash ("Get Started") -> Step 2: Language -> Step 3: Mobile Phone + SMS OTP
+  if (!user) {
+    return <OnboardingFlow onComplete={() => {}} />;
+  }
 
   return (
     <div className="min-h-screen bg-[#FAF7F2] text-[#3C2A21] flex justify-center">
@@ -54,11 +36,8 @@ function MainAppContent() {
       {/* Mobile Shell Wrapper */}
       <div className="w-full max-w-md min-h-screen bg-[#FAF7F2] flex flex-col relative shadow-soft-lg border-x border-pastel-200/60">
         
-        {/* Top Header */}
-        <Header 
-          onOpenLanguageModal={() => setShowLanguageModal(true)} 
-          onOpenDeviceSync={() => setShowDeviceSync(true)}
-        />
+        {/* Minimalist Top Header */}
+        <Header />
 
         {/* Active Tab View */}
         <main className="flex-1 flex flex-col overflow-hidden">
@@ -83,7 +62,7 @@ function MainAppContent() {
         {/* Bottom Navigation Dock */}
         <BottomNav onOpenCustomDialer={() => setShowCustomDialer(true)} />
 
-        {/* Modals */}
+        {/* Global Modals */}
         <CallingModal />
         <InboundCallModal />
         
@@ -102,26 +81,9 @@ function MainAppContent() {
           onClose={() => setShowDatabaseModal(false)}
         />
 
-        <DeviceSyncModal
-          isOpen={showDeviceSync}
-          onClose={() => setShowDeviceSync(false)}
-        />
-
-        {showSplash && (
-          <SplashModal 
-            onComplete={handleSplashComplete} 
-            onOpenLanguageSelector={() => setShowLanguageModal(true)} 
-          />
-        )}
-
-        <AuthModal 
-          isOpen={showAuthModal && !user} 
-          onClose={() => setShowAuthModal(false)} 
-        />
-
-        <LanguageSelectorModal 
-          isOpen={showLanguageModal} 
-          onClose={() => setShowLanguageModal(false)} 
+        <LanguageSelectorModal
+          isOpen={showLanguageModal}
+          onClose={() => setShowLanguageModal(false)}
         />
 
       </div>
