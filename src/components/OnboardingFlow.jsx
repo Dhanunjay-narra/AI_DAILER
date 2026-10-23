@@ -128,12 +128,8 @@ export function OnboardingFlow({ onComplete }) {
               <h1 className="text-3xl font-bold tracking-tight text-pastel-900 font-serif mb-1">
                 AI DIALER
               </h1>
-              <p className="text-xs uppercase tracking-widest text-pastel-500 font-semibold mb-4">
+              <p className="text-xs uppercase tracking-widest text-pastel-500 font-semibold mb-6">
                 Smart Calling & AI Receptionist
-              </p>
-
-              <p className="text-xs text-pastel-700 leading-relaxed max-w-[260px]">
-                మీ ఏరియా షాపులకు కాల్ చేసి స్టాక్ కనుగొనే మరియు మీ బిజినెస్ రిసెప్షన్ నిర్వహించే AI అసిస్టెంట్.
               </p>
             </div>
 
@@ -340,3 +336,4 @@ export function OnboardingFlow({ onComplete }) {
     </div>
   );
 }
+
