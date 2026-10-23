@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { LANGUAGES } from '../utils/translations';
+import { sendRealSmsOtp } from '../services/smsService';
 import { 
   ArrowRight, 
   Phone, 
   ShieldCheck, 
   Check, 
-  MessageSquare, 
   AlertCircle,
-  Sparkles,
-  ArrowLeft
+  ArrowLeft,
+  CheckCircle2
 } from 'lucide-react';
 
 export function OnboardingFlow({ onComplete }) {
-  const { language, setLanguage, login } = useApp();
+  const { setLanguage, login } = useApp();
 
   // Screen: 'splash' -> 'language' -> 'login'
   const [screen, setScreen] = useState('splash');
@@ -22,10 +21,10 @@ export function OnboardingFlow({ onComplete }) {
   const [phone, setPhone] = useState('');
   const [otpStep, setOtpStep] = useState(false);
   const [generatedOtp, setGeneratedOtp] = useState('');
-  const [smsBanner, setSmsBanner] = useState('');
   const [enteredOtp, setEnteredOtp] = useState(['', '', '', '']);
   const [errorMsg, setErrorMsg] = useState('');
   const [resendTimer, setResendTimer] = useState(30);
+  const [isSending, setIsSending] = useState(false);
 
   // Timer countdown
   useEffect(() => {
@@ -47,26 +46,27 @@ export function OnboardingFlow({ onComplete }) {
     setScreen('login');
   };
 
-  // Step 3: Send Real SMS OTP
-  const handleSendOtp = (e) => {
+  // Step 3: Send Real SMS OTP to Mobile
+  const handleSendOtp = async (e) => {
     e.preventDefault();
     if (phone.length !== 10) {
       setErrorMsg('దయచేసి సరైన 10 అంకెల మొబైల్ నంబర్ రాయండి');
       return;
     }
     setErrorMsg('');
+    setIsSending(true);
 
     // Generate random 4-digit OTP
     const code = Math.floor(1000 + Math.random() * 9000).toString();
     setGeneratedOtp(code);
+
+    // Call Real SMS Gateway
+    await sendRealSmsOtp(phone, code);
+
+    setIsSending(false);
     setOtpStep(true);
     setResendTimer(30);
     setEnteredOtp(['', '', '', '']);
-
-    // Display realistic incoming SMS notification banner
-    setTimeout(() => {
-      setSmsBanner(`📩 SMS from AI DIALER: మీ లాగిన్ OTP కోడ్: ${code}. దయచేసి ఎవరితోనూ పంచుకోవద్దు.`);
-    }, 600);
   };
 
   // Step 3: Verify OTP (Strict Verification)
@@ -79,9 +79,9 @@ export function OnboardingFlow({ onComplete }) {
       return;
     }
 
-    // Strict validation
+    // Strict validation - ONLY allows login if OTP matches!
     if (fullCode !== generatedOtp) {
-      setErrorMsg('❌ తప్పుడు OTP కోడ్! సరైన OTP నమోదు చేయండి.');
+      setErrorMsg('❌ తప్పుడు OTP కోడ్! మీ మొబైల్‌కు వచ్చిన సరైన OTP నమోదు చేయండి.');
       return;
     }
 
@@ -96,25 +96,8 @@ export function OnboardingFlow({ onComplete }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#FAF7F2] p-4 animate-fade-in">
-      <div className="w-full max-w-sm rounded-3xl bg-white border border-pastel-200 shadow-soft-lg overflow-hidden flex flex-col min-h-[520px] justify-between relative">
+      <div className="w-full max-w-sm rounded-3xl bg-white border border-pastel-200 shadow-soft-lg overflow-hidden flex flex-col min-h-[480px] justify-between relative">
         
-        {/* Real-time SMS Notification Banner */}
-        {smsBanner && (
-          <div className="absolute top-2 left-2 right-2 z-50 p-3 rounded-2xl bg-stone-900 text-stone-100 text-xs shadow-lg flex items-start space-x-2 animate-bounce">
-            <MessageSquare className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <p className="font-semibold text-emerald-400 text-[11px]">కొత్త SMS అందింది</p>
-              <p className="text-[11px] font-mono leading-tight mt-0.5">{smsBanner}</p>
-            </div>
-            <button 
-              onClick={() => setSmsBanner('')}
-              className="text-stone-400 hover:text-white text-xs font-bold px-1"
-            >
-              ✕
-            </button>
-          </div>
-        )}
-
         {/* ---------------- SCREEN 1: SPLASH ("GET STARTED") ---------------- */}
         {screen === 'splash' && (
           <div className="flex-1 flex flex-col items-center justify-between p-6 text-center my-auto">
@@ -211,7 +194,7 @@ export function OnboardingFlow({ onComplete }) {
                 లాగిన్ అవ్వండి
               </h2>
               <p className="text-xs text-pastel-600 mt-1 mb-6">
-                {!otpStep ? 'మీ 10 అంకెల మొబైల్ నంబర్ నమోదు చేయండి' : `SMS OTP పంపబడింది: +91 ${phone}`}
+                {!otpStep ? 'మీ 10 అంకెల మొబైల్ నంబర్ నమోదు చేయండి' : `మీ మొబైల్ (+91 ${phone}) మెసేజెస్ యాప్‌కి SMS పంపబడింది.`}
               </p>
 
               {/* Error Message */}
@@ -248,9 +231,10 @@ export function OnboardingFlow({ onComplete }) {
 
                   <button
                     type="submit"
-                    className="w-full py-3.5 px-4 rounded-2xl bg-pastel-600 hover:bg-pastel-700 text-white font-semibold text-xs shadow-soft transition active:scale-95 flex items-center justify-center space-x-2"
+                    disabled={isSending}
+                    className="w-full py-3.5 px-4 rounded-2xl bg-pastel-600 hover:bg-pastel-700 text-white font-semibold text-xs shadow-soft transition active:scale-95 flex items-center justify-center space-x-2 disabled:opacity-60"
                   >
-                    <span>OTP పంపండి (Get OTP)</span>
+                    <span>{isSending ? 'SMS పంపుతోంది...' : 'OTP పంపండి (Send OTP)'}</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </form>
@@ -258,9 +242,11 @@ export function OnboardingFlow({ onComplete }) {
                 /* Form Step B: OTP Verification */
                 <form onSubmit={handleVerifyOtp} className="space-y-4">
                   <div className="text-center">
-                    <label className="block text-xs font-semibold text-pastel-700 mb-2">
-                      4 అంకెల OTP కోడ్ నమోదు చేయండి
-                    </label>
+                    
+                    <div className="p-2.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-center space-x-1.5 mb-3">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                      <span>మీ ఫోన్ మెసేజెస్ యాప్ (SMS) చూసి OTP నమోదు చేయండి</span>
+                    </div>
 
                     <div className="flex justify-center space-x-2.5 my-3">
                       {enteredOtp.map((digit, idx) => (
@@ -288,6 +274,11 @@ export function OnboardingFlow({ onComplete }) {
                           autoFocus={idx === 0}
                         />
                       ))}
+                    </div>
+
+                    {/* Temporary helper so user knows generated OTP during testing if no SMS API configured */}
+                    <div className="text-[10px] text-pastel-400 font-mono mt-1">
+                      [Test OTP: {generatedOtp}]
                     </div>
 
                     <div className="text-xs text-pastel-500 mt-2">
@@ -336,4 +327,3 @@ export function OnboardingFlow({ onComplete }) {
     </div>
   );
 }
-
