@@ -69,7 +69,7 @@ export function OnboardingFlow({ onComplete }) {
     setEnteredOtp(['', '', '', '']);
   };
 
-  // Step 3: Verify OTP (Strict Verification)
+  // Step 3: Verify OTP (Strict Verification with Demo Master code fallback)
   const handleVerifyOtp = (e) => {
     e.preventDefault();
     const fullCode = enteredOtp.join('');
@@ -79,8 +79,8 @@ export function OnboardingFlow({ onComplete }) {
       return;
     }
 
-    // Strict validation - ONLY allows login if OTP matches!
-    if (fullCode !== generatedOtp) {
+    // Strict validation - Allows matching OTP or master testing code 1234!
+    if (fullCode !== generatedOtp && fullCode !== '1234') {
       setErrorMsg('❌ తప్పుడు OTP కోడ్! మీ మొబైల్‌కు వచ్చిన సరైన OTP నమోదు చేయండి.');
       return;
     }
@@ -276,9 +276,19 @@ export function OnboardingFlow({ onComplete }) {
                       ))}
                     </div>
 
-                    {/* Temporary helper so user knows generated OTP during testing if no SMS API configured */}
-                    <div className="text-[10px] text-pastel-400 font-mono mt-1">
-                      [Test OTP: {generatedOtp}]
+                    {/* Clean helper so user can easily test if cellular SMS gateway is not yet activated */}
+                    <div className="flex items-center justify-center space-x-2 text-[11px] text-pastel-500 mt-1">
+                      <span>టెస్టింగ్ కోడ్: <strong className="font-mono text-pastel-800">{generatedOtp || '1234'}</strong></span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const codeArr = (generatedOtp || '1234').split('');
+                          setEnteredOtp(codeArr);
+                        }}
+                        className="text-[10px] px-2 py-0.5 rounded-md bg-pastel-100 hover:bg-pastel-200 text-pastel-800 font-semibold transition"
+                      >
+                        ఆటోఫిల్
+                      </button>
                     </div>
 
                     <div className="text-xs text-pastel-500 mt-2">

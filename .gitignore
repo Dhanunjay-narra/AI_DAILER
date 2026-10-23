@@ -23,6 +23,11 @@ dist-ssr
 *.sln
 *.sw?
 
+# Environment files
+.env
+.env.*
+!.env.example
+
 # Capacitor native folders (can be re-generated with cap add)
 # android
 
