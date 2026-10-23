@@ -18,16 +18,18 @@ import {
   ArrowRight,
   Plus,
   Minus,
-  Sliders
+  Sliders,
+  Database
 } from 'lucide-react';
 
-export function ReceptionDeskView({ onOpenCategorySetup, onOpenCustomDialer }) {
+export function ReceptionDeskView({ onOpenCategorySetup, onOpenCustomDialer, onOpenDatabaseModal }) {
   const { 
     selectedCategory, 
     businessProfile, 
     updateBusinessProfile, 
     receptionRecords, 
     setActiveInboundCall,
+    isCloudDbConnected,
     language 
   } = useApp();
 
@@ -85,13 +87,27 @@ export function ReceptionDeskView({ onOpenCategorySetup, onOpenCustomDialer }) {
             </div>
           </div>
 
-          <button
-            onClick={onOpenCategorySetup}
-            className="p-2 rounded-xl bg-pastel-50 hover:bg-pastel-100 border border-pastel-200 text-pastel-700 transition"
-            title="విభాగం & సెట్టింగ్స్ మార్చండి"
-          >
-            <Settings2 className="w-4 h-4" />
-          </button>
+          <div className="flex items-center space-x-1.5">
+            <button
+              onClick={onOpenDatabaseModal}
+              className={`p-2 rounded-xl border transition flex items-center space-x-1 text-xs ${
+                isCloudDbConnected 
+                  ? 'bg-emerald-50 border-emerald-200 text-emerald-700' 
+                  : 'bg-pastel-50 border-pastel-200 text-pastel-700 hover:bg-pastel-100'
+              }`}
+              title="డేటాబేస్ సెట్టింగ్స్"
+            >
+              <Database className="w-4 h-4" />
+            </button>
+
+            <button
+              onClick={onOpenCategorySetup}
+              className="p-2 rounded-xl bg-pastel-50 hover:bg-pastel-100 border border-pastel-200 text-pastel-700 transition"
+              title="విభాగం & సెట్టింగ్స్ మార్చండి"
+            >
+              <Settings2 className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Status Indicators: Doctor Availability & Holiday */}

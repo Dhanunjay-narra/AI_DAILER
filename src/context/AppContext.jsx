@@ -3,6 +3,12 @@ import { translations, LANGUAGES } from '../utils/translations';
 import { audioTones } from '../utils/audioTones';
 import { stopSpeaking } from '../services/aiCallingService';
 import { BUSINESS_CATEGORIES } from '../services/receptionistService';
+import { 
+  getDbReceptionRecords, 
+  insertDbReceptionRecord, 
+  upsertDbBusinessProfile, 
+  isCloudDbConnected 
+} from '../services/database';
 
 const AppContext = createContext();
 
@@ -52,7 +58,7 @@ export function AppProvider({ children }) {
   const updateBusinessProfile = (newProfile) => {
     setBusinessProfile(prev => {
       const updated = { ...prev, ...newProfile };
-      localStorage.setItem('ai_dialer_biz_profile', JSON.stringify(updated));
+      upsertDbBusinessProfile(selectedCategory, updated);
       return updated;
     });
   };
@@ -63,7 +69,7 @@ export function AppProvider({ children }) {
     const cat = BUSINESS_CATEGORIES.find(c => c.id === catId);
     if (cat) {
       setBusinessProfile(cat.defaultSettings);
-      localStorage.setItem('ai_dialer_biz_profile', JSON.stringify(cat.defaultSettings));
+      upsertDbBusinessProfile(catId, cat.defaultSettings);
     }
   };
 
@@ -73,7 +79,6 @@ export function AppProvider({ children }) {
     if (saved) {
       try { return JSON.parse(saved); } catch (e) {}
     }
-    // Default initial records for instant visualization
     return [
       {
         id: 'rec-039',
@@ -104,12 +109,18 @@ export function AppProvider({ children }) {
     ];
   });
 
-  const addReceptionRecord = (newRecord) => {
-    setReceptionRecords(prev => {
-      const updated = [newRecord, ...prev];
-      localStorage.setItem('ai_dialer_reception_records', JSON.stringify(updated));
-      return updated;
+  // Hydrate from Cloud Database if available
+  useEffect(() => {
+    getDbReceptionRecords().then(records => {
+      if (records && records.length > 0) {
+        setReceptionRecords(records);
+      }
     });
+  }, []);
+
+  const addReceptionRecord = (newRecord) => {
+    insertDbReceptionRecord(newRecord);
+    setReceptionRecords(prev => [newRecord, ...prev]);
 
     // Increment current booked counter
     setBusinessProfile(prev => {
@@ -117,7 +128,7 @@ export function AppProvider({ children }) {
         ...prev,
         currentBookedSlots: (prev.currentBookedSlots || 0) + 1
       };
-      localStorage.setItem('ai_dialer_biz_profile', JSON.stringify(updated));
+      upsertDbBusinessProfile(selectedCategory, updated);
       return updated;
     });
   };
@@ -247,6 +258,7 @@ export function AppProvider({ children }) {
         endCurrentCall,
         soundEnabled,
         setSoundEnabled,
+        isCloudDbConnected,
       }}
     >
       {children}

@@ -14,6 +14,7 @@ import { ReceptionDeskView } from './components/ReceptionDeskView';
 import { CategorySetupModal } from './components/CategorySetupModal';
 import { InboundCallModal } from './components/InboundCallModal';
 import { OutboundCustomCallModal } from './components/OutboundCustomCallModal';
+import { DatabaseModal } from './components/DatabaseModal';
 
 function MainAppContent() {
   const { user, activeTab } = useApp();
@@ -32,6 +33,9 @@ function MainAppContent() {
 
   // Custom Outbound Call modal state
   const [showCustomDialer, setShowCustomDialer] = useState(false);
+
+  // Database modal state
+  const [showDatabaseModal, setShowDatabaseModal] = useState(false);
 
   const handleSplashComplete = () => {
     setShowSplash(false);
@@ -55,13 +59,17 @@ function MainAppContent() {
             <ReceptionDeskView 
               onOpenCategorySetup={() => setShowCategorySetup(true)}
               onOpenCustomDialer={() => setShowCustomDialer(true)}
+              onOpenDatabaseModal={() => setShowDatabaseModal(true)}
             />
           )}
           {activeTab === 'chat' && <ChatView />}
           {activeTab === 'dialer' && <DialerLogsView />}
           {activeTab === 'shops' && <ShopsDirectoryView />}
           {activeTab === 'settings' && (
-            <SettingsView onOpenLanguageModal={() => setShowLanguageModal(true)} />
+            <SettingsView 
+              onOpenLanguageModal={() => setShowLanguageModal(true)} 
+              onOpenDatabaseModal={() => setShowDatabaseModal(true)}
+            />
           )}
         </main>
 
@@ -80,6 +88,11 @@ function MainAppContent() {
         <OutboundCustomCallModal
           isOpen={showCustomDialer}
           onClose={() => setShowCustomDialer(false)}
+        />
+
+        <DatabaseModal
+          isOpen={showDatabaseModal}
+          onClose={() => setShowDatabaseModal(false)}
         />
 
         {showSplash && (

@@ -9,10 +9,11 @@ import {
   LogOut, 
   ShieldCheck, 
   Sparkles,
-  Smartphone
+  Smartphone,
+  Database
 } from 'lucide-react';
 
-export function SettingsView({ onOpenLanguageModal }) {
+export function SettingsView({ onOpenLanguageModal, onOpenDatabaseModal }) {
   const { 
     t, 
     language, 
@@ -20,7 +21,8 @@ export function SettingsView({ onOpenLanguageModal }) {
     user, 
     logout, 
     soundEnabled, 
-    setSoundEnabled 
+    setSoundEnabled,
+    isCloudDbConnected 
   } = useApp();
 
   const [callMode, setCallMode] = useState('simulated'); // 'simulated' | 'telephony'
@@ -76,6 +78,32 @@ export function SettingsView({ onOpenLanguageModal }) {
           </button>
         </div>
       )}
+
+      {/* Database Section */}
+      <div className="rounded-2xl bg-white border border-pastel-200 p-4 shadow-xs space-y-3">
+        <h3 className="text-xs font-bold text-pastel-800 uppercase tracking-wider flex items-center space-x-1.5">
+          <Database className="w-4 h-4 text-pastel-600" />
+          <span>డేటాబేస్ కనెక్షన్ (Database Storage)</span>
+        </h3>
+
+        <div className="flex items-center justify-between p-3 rounded-xl bg-pastel-50 border border-pastel-200">
+          <div>
+            <p className="text-xs font-bold text-pastel-900">
+              {isCloudDbConnected ? '🟢 Supabase Cloud Database' : '🟡 Local Offline Database'}
+            </p>
+            <p className="text-[10px] text-pastel-500">
+              {isCloudDbConnected ? 'డేటా క్లౌడ్‌లో సురక్షితంగా సింక్ అవుతోంది' : 'బ్రౌజర్ లోకల్ స్టోరేజ్‌లో సేవ్ అవుతోంది'}
+            </p>
+          </div>
+
+          <button
+            onClick={onOpenDatabaseModal}
+            className="px-3 py-1.5 rounded-lg bg-pastel-600 text-white text-xs font-semibold hover:bg-pastel-700 transition"
+          >
+            కాన్ఫిగర్ చేయండి
+          </button>
+        </div>
+      </div>
 
       {/* Language Section */}
       <div className="rounded-2xl bg-white border border-pastel-200 p-4 shadow-xs space-y-3">
