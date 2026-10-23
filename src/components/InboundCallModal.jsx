@@ -8,7 +8,9 @@ import {
   Send, 
   CheckCircle2, 
   Volume2, 
-  AlertCircle
+  AlertCircle,
+  Mic,
+  MicOff
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -139,7 +141,43 @@ export function InboundCallModal() {
   });
   const [userInput, setUserInput] = useState('');
   const [isAiSpeaking, setIsAiSpeaking] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const chatScrollRef = useRef(null);
+
+  const toggleSpeechRecognition = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Speech Recognition is not supported by your browser.');
+      return;
+    }
+
+    if (isListening) {
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = language === 'te' ? 'te-IN' : (language === 'hi' ? 'hi-IN' : 'en-US');
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => setIsListening(true);
+      recognition.onend = () => setIsListening(false);
+      recognition.onerror = () => setIsListening(false);
+
+      recognition.onresult = (event) => {
+        const transcriptText = event.results[0][0].transcript;
+        setUserInput(transcriptText);
+        setIsListening(false);
+        handleAutoReplyStep(transcriptText);
+      };
+
+      recognition.start();
+    } catch (e) {
+      setIsListening(false);
+    }
+  };
 
   const scripts = RECEPTION_SCRIPTS[language] || RECEPTION_SCRIPTS.te;
   const bizName = businessProfile.businessName || 'హాస్పిటల్';
@@ -432,11 +470,23 @@ export function InboundCallModal() {
               }}
               className="w-full flex items-center space-x-2"
             >
+              <button
+                type="button"
+                onClick={toggleSpeechRecognition}
+                className={`w-8 h-8 rounded-xl flex items-center justify-center transition ${
+                  isListening 
+                    ? 'bg-red-500 text-white animate-pulse' 
+                    : 'bg-pastel-100 hover:bg-pastel-200 text-pastel-700'
+                }`}
+                title="మాట్లాడండి (Speak your reply)"
+              >
+                {isListening ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
+              </button>
               <input
                 type="text"
                 value={userInput}
                 onChange={(e) => setUserInput(e.target.value)}
-                placeholder="కాలర్ గా మీ సమాధానం రాయండి..."
+                placeholder={isListening ? "వింటోంది... మాట్లాడండి..." : "కాలర్ గా సమాధానం రాయండి లేదా మాట్లాడండి..."}
                 className="flex-1 py-2 px-3 rounded-xl border border-pastel-200 bg-white text-xs text-pastel-900 focus:outline-none focus:border-pastel-500"
               />
               <button

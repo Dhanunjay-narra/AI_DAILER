@@ -231,3 +231,4 @@ alter table business_profiles enable row level security;
 create policy "Allow public all access on reception_records" on reception_records for all using (true) with check (true);
 create policy "Allow public all access on business_profiles" on business_profiles for all using (true) with check (true);
 `;
+

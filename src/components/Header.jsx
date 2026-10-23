@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { MapPin, Globe, Volume2, VolumeX, Navigation, Edit2, Check } from 'lucide-react';
+import { MapPin, Globe, Volume2, VolumeX, Navigation, Edit2, Check, Cpu } from 'lucide-react';
 
-export function Header({ onOpenLanguageModal }) {
+export function Header({ onOpenLanguageModal, onOpenDeviceSync }) {
   const { 
     t, 
     language, 
@@ -48,9 +48,18 @@ export function Header({ onOpenLanguageModal }) {
           </div>
         </div>
 
-        {/* Right Tools: Language + Sound + Profile */}
-        <div className="flex items-center space-x-2">
+        {/* Right Tools: Hardware Sync + Language + Sound + Profile */}
+        <div className="flex items-center space-x-1.5">
           
+          {/* Device Hardware Sync */}
+          <button
+            onClick={onOpenDeviceSync}
+            className="w-8 h-8 rounded-full bg-white border border-pastel-200 text-pastel-700 flex items-center justify-center hover:bg-pastel-50 transition active:scale-95 shadow-sm"
+            title="డివైజ్ హార్డ్‌వేర్ & పర్మిషన్స్ సింక్"
+          >
+            <Cpu className="w-4 h-4 text-pastel-600" />
+          </button>
+
           {/* Sound Toggle */}
           <button
             onClick={() => setSoundEnabled(!soundEnabled)}

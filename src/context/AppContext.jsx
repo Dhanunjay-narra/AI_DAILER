@@ -9,6 +9,7 @@ import {
   upsertDbBusinessProfile, 
   isCloudDbConnected 
 } from '../services/database';
+import { deviceSync } from '../services/deviceSyncService';
 
 const AppContext = createContext();
 
@@ -148,32 +149,24 @@ export function AppProvider({ children }) {
     isDetecting: false,
   });
 
-  const requestGpsLocation = () => {
-    if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser.');
-      return;
-    }
+  const requestGpsLocation = async () => {
     setLocation(prev => ({ ...prev, isDetecting: true }));
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLocation({
-          areaName: 'Current GPS Location (Near You)',
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
-          isGpsGranted: true,
-          isDetecting: false,
-        });
-      },
-      (err) => {
-        console.warn('GPS location denied or unavailable:', err);
-        setLocation(prev => ({
-          ...prev,
-          isGpsGranted: false,
-          isDetecting: false,
-        }));
-      },
-      { timeout: 8000 }
-    );
+    const locRes = await deviceSync.syncLocation();
+    if (locRes && locRes.granted) {
+      setLocation({
+        areaName: locRes.area,
+        latitude: locRes.lat,
+        longitude: locRes.lon,
+        isGpsGranted: true,
+        isDetecting: false,
+      });
+    } else {
+      setLocation(prev => ({
+        ...prev,
+        isGpsGranted: false,
+        isDetecting: false,
+      }));
+    }
   };
 
   const updateAreaName = (newArea) => {

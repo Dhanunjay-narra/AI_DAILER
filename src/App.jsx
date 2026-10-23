@@ -15,6 +15,7 @@ import { CategorySetupModal } from './components/CategorySetupModal';
 import { InboundCallModal } from './components/InboundCallModal';
 import { OutboundCustomCallModal } from './components/OutboundCustomCallModal';
 import { DatabaseModal } from './components/DatabaseModal';
+import { DeviceSyncModal } from './components/DeviceSyncModal';
 
 function MainAppContent() {
   const { user, activeTab } = useApp();
@@ -37,6 +38,9 @@ function MainAppContent() {
   // Database modal state
   const [showDatabaseModal, setShowDatabaseModal] = useState(false);
 
+  // Device Sync modal state
+  const [showDeviceSync, setShowDeviceSync] = useState(false);
+
   const handleSplashComplete = () => {
     setShowSplash(false);
     if (!user) {
@@ -51,7 +55,10 @@ function MainAppContent() {
       <div className="w-full max-w-md min-h-screen bg-[#FAF7F2] flex flex-col relative shadow-soft-lg border-x border-pastel-200/60">
         
         {/* Top Header */}
-        <Header onOpenLanguageModal={() => setShowLanguageModal(true)} />
+        <Header 
+          onOpenLanguageModal={() => setShowLanguageModal(true)} 
+          onOpenDeviceSync={() => setShowDeviceSync(true)}
+        />
 
         {/* Active Tab View */}
         <main className="flex-1 flex flex-col overflow-hidden">
@@ -93,6 +100,11 @@ function MainAppContent() {
         <DatabaseModal
           isOpen={showDatabaseModal}
           onClose={() => setShowDatabaseModal(false)}
+        />
+
+        <DeviceSyncModal
+          isOpen={showDeviceSync}
+          onClose={() => setShowDeviceSync(false)}
         />
 
         {showSplash && (
