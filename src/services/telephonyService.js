@@ -9,8 +9,8 @@ export async function makeRealCellularCall(phoneNumber, promptTask, apiKey = '')
     cleanNumber = `+${cleanNumber}`;
   }
 
-  // Get token from parameter, localStorage, or fallback
-  const token = (apiKey || localStorage.getItem('ai_dialer_bland_key') || 'org_1447689266').trim();
+  // Verified active Bland.ai API Key
+  const token = (apiKey || localStorage.getItem('ai_dialer_bland_key') || 'org_6f69a9550569a54358572b48cb479e4416c1445d841c748aea1056c612a1c485494f1e493e5c6e78a3ff69').trim();
 
   try {
     const res = await fetch('https://api.bland.ai/v1/calls', {

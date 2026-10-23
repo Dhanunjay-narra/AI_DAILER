@@ -32,9 +32,9 @@ export function SettingsView({ onOpenLanguageModal, onOpenDatabaseModal }) {
     isCloudDbConnected 
   } = useApp();
 
-  // Bland.ai API Key state
+  // Bland.ai API Key state (pre-filled with verified active key)
   const [blandKey, setBlandKey] = useState(() => {
-    return localStorage.getItem('ai_dialer_bland_key') || 'org_1447689266';
+    return localStorage.getItem('ai_dialer_bland_key') || 'org_6f69a9550569a54358572b48cb479e4416c1445d841c748aea1056c612a1c485494f1e493e5c6e78a3ff69';
   });
 
   // Fast2SMS API Key state
@@ -332,8 +332,7 @@ export function SettingsView({ onOpenLanguageModal, onOpenDatabaseModal }) {
                     <div className="p-2 rounded-lg bg-white/70 border border-amber-300 text-[10px] text-amber-900 space-y-1">
                       <p className="font-semibold">💡 సహాయం (Fix Instruction):</p>
                       <p>
-                        మీరు ఇచ్చిన <code>org_1447689266</code> అనేది Organization ID. Bland.ai నుండి లైవ్ కాల్ రావడానికి, 
-                        Bland.ai డ్యాష్‌బోర్డ్ ➔ Settings ➔ API Keys లో ఉండే <b>Secret Key (sk_...)</b> ని ఎంటర్ చేయాలి.
+                        Bland.ai డ్యాష్‌బోర్డ్ ➔ Settings ➔ API Keys లో ఉండే పూర్తి Secret API Key ని ఇక్కడ ఎంటర్ చేయండి.
                       </p>
                     </div>
                   )}
