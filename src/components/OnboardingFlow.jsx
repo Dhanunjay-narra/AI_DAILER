@@ -243,9 +243,9 @@ export function OnboardingFlow({ onComplete }) {
                 <form onSubmit={handleVerifyOtp} className="space-y-4">
                   <div className="text-center">
                     
-                    <div className="p-2.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-center space-x-1.5 mb-3">
+                    <div className="p-2.5 rounded-2xl bg-pastel-50 border border-pastel-200 text-pastel-800 text-xs flex items-center justify-center space-x-1.5 mb-3">
                       <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                      <span>మీ ఫోన్ మెసేజెస్ యాప్ (SMS) చూసి OTP నమోదు చేయండి</span>
+                      <span>+91 {phone} కు పంపిన 4 అంకెల OTP నమోదు చేయండి</span>
                     </div>
 
                     <div className="flex justify-center space-x-2.5 my-3">
@@ -274,21 +274,6 @@ export function OnboardingFlow({ onComplete }) {
                           autoFocus={idx === 0}
                         />
                       ))}
-                    </div>
-
-                    {/* Clean helper so user can easily test if cellular SMS gateway is not yet activated */}
-                    <div className="flex items-center justify-center space-x-2 text-[11px] text-pastel-500 mt-1">
-                      <span>టెస్టింగ్ కోడ్: <strong className="font-mono text-pastel-800">{generatedOtp || '1234'}</strong></span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const codeArr = (generatedOtp || '1234').split('');
-                          setEnteredOtp(codeArr);
-                        }}
-                        className="text-[10px] px-2 py-0.5 rounded-md bg-pastel-100 hover:bg-pastel-200 text-pastel-800 font-semibold transition"
-                      >
-                        ఆటోఫిల్
-                      </button>
                     </div>
 
                     <div className="text-xs text-pastel-500 mt-2">

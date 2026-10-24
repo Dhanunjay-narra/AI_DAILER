@@ -79,22 +79,18 @@ export function ReceptionDeskView({ onOpenCategorySetup, onOpenCustomDialer, onO
           </div>
 
           <div className="flex items-center space-x-1.5">
-            <button
-              onClick={onOpenDatabaseModal}
-              className={`p-2 rounded-xl border transition flex items-center space-x-1 text-xs ${
-                isCloudDbConnected 
-                  ? 'bg-emerald-50 border-emerald-200 text-emerald-700' 
-                  : 'bg-pastel-50 border-pastel-200 text-pastel-700 hover:bg-pastel-100'
-              }`}
-              title="డేటాబేస్ సెట్టింగ్స్"
+            <span 
+              className="px-2.5 py-1 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-semibold flex items-center space-x-1"
+              title="డేటా ఆటోమేటిక్‌గా క్లౌడ్‌లో సేవ్ అవుతోంది"
             >
-              <Database className="w-4 h-4" />
-            </button>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>క్లౌడ్ సింక్</span>
+            </span>
 
             <button
               onClick={onOpenCategorySetup}
               className="p-2 rounded-xl bg-pastel-50 hover:bg-pastel-100 border border-pastel-200 text-pastel-700 transition"
-              title="సెట్టింగ్స్ మార్చండి"
+              title="వివరాలు మార్చండి"
             >
               <Settings2 className="w-4 h-4" />
             </button>

@@ -54,7 +54,7 @@ function MainAppContent() {
           {activeTab === 'settings' && (
             <SettingsView 
               onOpenLanguageModal={() => setShowLanguageModal(true)} 
-              onOpenDatabaseModal={() => setShowDatabaseModal(true)}
+              onOpenCategorySetup={() => setShowCategorySetup(true)}
             />
           )}
         </main>

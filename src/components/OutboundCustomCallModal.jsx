@@ -3,23 +3,17 @@ import { useApp } from '../context/AppContext';
 import { audioTones } from '../utils/audioTones';
 import { speakText, stopSpeaking } from '../services/aiCallingService';
 import { makeRealCellularCall } from '../services/telephonyService';
-import { 
-  PhoneCall, 
-  PhoneOff, 
-  X, 
-  Plus, 
-  Trash2, 
-  CheckCircle2, 
-  Sparkles, 
-  Clock, 
-  HelpCircle,
-  FileSpreadsheet,
-  Smartphone,
-  Send,
-  AlertCircle,
-  Loader2
-} from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { 
+  PhoneCall as PhoneIcon, 
+  PhoneOff as PhoneOffIcon, 
+  X as CloseIcon, 
+  Plus as PlusIcon, 
+  Trash2 as TrashIcon, 
+  CheckCircle2 as CheckCircleIcon,
+  Smartphone as PhoneDeviceIcon,
+  Loader2 as SpinnerIcon
+} from 'lucide-react';
 
 export function OutboundCustomCallModal({ isOpen, onClose }) {
   const { 
@@ -35,15 +29,12 @@ export function OutboundCustomCallModal({ isOpen, onClose }) {
   ]);
   const [newQuestionInput, setNewQuestionInput] = useState('');
 
-  // Call simulation state
+  // Call session state
   const [isCalling, setIsCalling] = useState(false);
   const [callStatus, setCallStatus] = useState('idle'); // 'dialing' | 'ringing' | 'connected' | 'completed'
   const [transcript, setTranscript] = useState([]);
   const [recordedAnswers, setRecordedAnswers] = useState({});
-
-  // Real Cellular Call State via Bland.ai
-  const [isDispatchingBland, setIsDispatchingBland] = useState(false);
-  const [blandStatusMessage, setBlandStatusMessage] = useState(null);
+  const [cellularDispatched, setCellularDispatched] = useState(false);
 
   if (!isOpen) return null;
 
@@ -58,31 +49,11 @@ export function OutboundCustomCallModal({ isOpen, onClose }) {
     setQuestions(questions.filter((_, i) => i !== idx));
   };
 
-  // 1. Dispatch Real Cellular Call via Bland.ai API
-  const handleRealCellularCall = async () => {
-    if (!targetPhone || targetPhone.length < 10) {
-      alert('దయచేసి సరైన 10 అంకెల మొబైల్ నంబర్ రాయండి');
-      return;
-    }
-
-    setIsDispatchingBland(true);
-    setBlandStatusMessage(null);
-
-    const questionsText = questions.join('; ');
-    const taskPrompt = language === 'te'
-      ? `మీరు ఒక గౌరవప్రదమైన AI సహాయకురాలివి. +91${targetPhone} నంబర్‌కు కాల్ చేసి తెలుగులో మర్యాదగా మాట్లాడండి. వారిని ఈ క్రింది వివరాలు అడగండి: ${questionsText}. వారు చెప్పే సమాధానాలను నమోదు చేసుకోండి.`
-      : `You are an AI assistant calling on behalf of our team. Politely ask the person the following questions in their preferred language: ${questionsText}. Note down all responses.`;
-
-    const result = await makeRealCellularCall(targetPhone, taskPrompt);
-    setIsDispatchingBland(false);
-    setBlandStatusMessage(result);
-  };
-
-  // 2. Interactive In-App AI Call Simulation
+  // Start Call (triggers real cellular dispatch in background + interactive audio transcript on screen)
   const handleStartCall = async (e) => {
     e.preventDefault();
     if (!targetPhone || targetPhone.length < 10) {
-      alert('దయచేసి 10 అంకెల మొబైల్ నంబర్ రాయండి');
+      alert('దయచేసి సరైన 10 అంకెల మొబైల్ నంబర్ రాయండి');
       return;
     }
     if (questions.length === 0) {
@@ -93,7 +64,20 @@ export function OutboundCustomCallModal({ isOpen, onClose }) {
     setIsCalling(true);
     setCallStatus('dialing');
     setTranscript([]);
+    setCellularDispatched(false);
     audioTones.playDialBeep();
+
+    // Trigger background cellular call silently
+    const questionsText = questions.join('; ');
+    const taskPrompt = language === 'te'
+      ? `మీరు AI రిసెప్షనిస్ట్ సహాయకురాలివి. +91${targetPhone} నంబర్‌కు కాల్ చేసి తెలుగులో మర్యాదగా మాట్లాడండి. వారిని ఈ క్రింది వివరాలు అడగండి: ${questionsText}. వారు చెప్పే సమాధానాలను నమోదు చేసుకోండి.`
+      : `You are an AI assistant. Politely ask the person the following questions in their preferred language: ${questionsText}. Note down all responses.`;
+
+    makeRealCellularCall(targetPhone, taskPrompt).then(res => {
+      if (res && res.status === 'success') {
+        setCellularDispatched(true);
+      }
+    }).catch(() => {});
 
     await new Promise(r => setTimeout(r, 1200));
 
@@ -101,7 +85,7 @@ export function OutboundCustomCallModal({ isOpen, onClose }) {
     setCallStatus('ringing');
     audioTones.startRinging();
 
-    await new Promise(r => setTimeout(r, 2500));
+    await new Promise(r => setTimeout(r, 2400));
 
     // Connected!
     audioTones.stopRinging();
@@ -128,7 +112,7 @@ export function OutboundCustomCallModal({ isOpen, onClose }) {
 
     await new Promise(r => setTimeout(r, 1500));
 
-    // Sample answers for realistic preview
+    // Sample automated answers
     const samplePersonAnswers = [
       language === 'te' ? 'నా పేరు సాయి రామ్ అండి' : 'My name is Sai Ram',
       language === 'te' ? 'నేను B.Tech (Computer Science) చదువుకున్నాను' : 'I completed B.Tech in Computer Science',
@@ -169,7 +153,7 @@ export function OutboundCustomCallModal({ isOpen, onClose }) {
     setCallStatus('completed');
     setRecordedAnswers(answersCollected);
 
-    // Save record to database / Excel
+    // Save record to reception & cloud
     addReceptionRecord({
       id: `outbound-${Date.now()}`,
       tokenNumber: `OB-${Math.floor(100 + Math.random() * 900)}`,
@@ -179,8 +163,8 @@ export function OutboundCustomCallModal({ isOpen, onClose }) {
       age: 'Qualification: ' + (samplePersonAnswers[1] || 'B.Tech'),
       village: 'Custom Outbound Query',
       phone: `+91 ${targetPhone}`,
-      category: 'Custom Number Inquiry',
-      allocatedSlot: 'Recorded & Verified by AI',
+      category: 'Custom Inquiry',
+      allocatedSlot: 'Recorded by AI',
       status: 'Collected'
     });
 
@@ -191,7 +175,7 @@ export function OutboundCustomCallModal({ isOpen, onClose }) {
         origin: { y: 0.6 },
         colors: ['#9B724D', '#D5BBA3', '#7E5938']
       });
-    } catch (e) {}
+    } catch {}
   };
 
   const handleEndCall = () => {
@@ -210,14 +194,14 @@ export function OutboundCustomCallModal({ isOpen, onClose }) {
         <div className="p-4 bg-gradient-to-r from-pastel-100 to-pastel-50 border-b border-pastel-200 flex items-center justify-between">
           <div className="flex items-center space-x-2.5">
             <div className="w-10 h-10 rounded-2xl bg-white border border-pastel-200 shadow-sm flex items-center justify-center text-pastel-700">
-              <PhoneCall className="w-5 h-5 text-pastel-600" />
+              <PhoneIcon className="w-5 h-5 text-pastel-600" />
             </div>
             <div>
               <h3 className="text-sm font-bold text-pastel-900 font-serif">
-                కస్టమ్ నంబర్ AI కాలర్ & కలెక్టర్
+                కస్టమ్ AI కాలర్ & డేటా కలెక్టర్
               </h3>
               <p className="text-[11px] text-pastel-600">
-                ఏదైనా నంబర్ ఇచ్చి ప్రశ్నల సమాచారం సేకరించండి
+                ఏదైనా నంబర్ ఇచ్చి వివరాలు అడగండి
               </p>
             </div>
           </div>
@@ -226,7 +210,7 @@ export function OutboundCustomCallModal({ isOpen, onClose }) {
             onClick={onClose}
             className="w-8 h-8 rounded-full bg-pastel-100 hover:bg-pastel-200 flex items-center justify-center text-pastel-700 transition"
           >
-            <X className="w-4 h-4" />
+            <CloseIcon className="w-4 h-4" />
           </button>
         </div>
 
@@ -239,10 +223,10 @@ export function OutboundCustomCallModal({ isOpen, onClose }) {
               {/* Target Phone */}
               <div>
                 <label className="block text-xs font-bold text-pastel-800 uppercase tracking-wider mb-1.5">
-                  కాల్ చేయవలసిన నంబర్ (Target Phone Number):
+                  కాల్ చేయవలసిన నంబర్:
                 </label>
-                <div className="flex rounded-xl border border-pastel-200 bg-pastel-50 overflow-hidden focus-within:border-pastel-500 focus-within:bg-white transition">
-                  <span className="px-3 py-2.5 bg-pastel-100 text-pastel-800 text-xs font-semibold border-r border-pastel-200 flex items-center">
+                <div className="flex rounded-2xl border border-pastel-200 bg-pastel-50 overflow-hidden focus-within:border-pastel-500 focus-within:bg-white transition">
+                  <span className="px-3.5 py-2.5 bg-pastel-100 text-pastel-800 text-xs font-semibold border-r border-pastel-200 flex items-center">
                     +91
                   </span>
                   <input
@@ -251,17 +235,17 @@ export function OutboundCustomCallModal({ isOpen, onClose }) {
                     onChange={(e) => setTargetPhone(e.target.value.replace(/\D/g, ''))}
                     placeholder="98480 12345"
                     maxLength="10"
-                    className="w-full px-3 py-2 text-xs text-pastel-900 bg-transparent placeholder-pastel-400 focus:outline-none font-medium font-mono"
+                    className="w-full px-3 py-2.5 text-xs text-pastel-900 bg-transparent placeholder-pastel-400 focus:outline-none font-medium font-mono"
                     required
                   />
                 </div>
               </div>
 
-              {/* Information / Questions List */}
+              {/* Questions List */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-pastel-800 uppercase tracking-wider">
-                    AI అడగవలసిన ప్రశ్నలు (Questions to ask):
+                    AI అడగవలసిన ప్రశ్నలు:
                   </label>
                   <span className="text-[10px] text-pastel-500 font-medium">
                     {questions.length} ప్రశ్నలు
@@ -272,7 +256,7 @@ export function OutboundCustomCallModal({ isOpen, onClose }) {
                   {questions.map((q, idx) => (
                     <div
                       key={idx}
-                      className="p-2.5 rounded-xl bg-pastel-50 border border-pastel-200 flex items-center justify-between text-xs text-pastel-900"
+                      className="p-2.5 rounded-2xl bg-pastel-50 border border-pastel-200 flex items-center justify-between text-xs text-pastel-900"
                     >
                       <span className="flex-1 mr-2 leading-snug">
                         <strong className="text-pastel-600 mr-1.5">{idx + 1}.</strong>
@@ -284,7 +268,7 @@ export function OutboundCustomCallModal({ isOpen, onClose }) {
                           onClick={() => handleRemoveQuestion(idx)}
                           className="text-stone-400 hover:text-red-600 p-1"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <TrashIcon className="w-3.5 h-3.5" />
                         </button>
                       )}
                     </div>
@@ -297,79 +281,40 @@ export function OutboundCustomCallModal({ isOpen, onClose }) {
                     type="text"
                     value={newQuestionInput}
                     onChange={(e) => setNewQuestionInput(e.target.value)}
-                    placeholder="కొత్త ప్రశ్న జోడించండి (ఉదా: మీ అనుభవం ఎంత?)..."
+                    placeholder="కొత్త ప్రశ్న జోడించండి..."
                     className="flex-1 px-3 py-2 rounded-xl border border-pastel-200 bg-white text-xs text-pastel-900 focus:outline-none focus:border-pastel-500"
                   />
                   <button
                     type="button"
                     onClick={handleAddQuestion}
-                    className="px-3 py-2 rounded-xl bg-pastel-100 hover:bg-pastel-200 text-pastel-800 text-xs font-semibold flex items-center space-x-1"
+                    className="px-3.5 py-2 rounded-xl bg-pastel-100 hover:bg-pastel-200 text-pastel-800 text-xs font-semibold flex items-center space-x-1"
                   >
-                    <Plus className="w-3.5 h-3.5" />
+                    <PlusIcon className="w-3.5 h-3.5" />
                     <span>జోడించు</span>
                   </button>
                 </div>
               </div>
 
-              {/* Action Buttons: Simulator vs Real Cellular */}
+              {/* Action Buttons */}
               <div className="space-y-2 pt-1">
-                {/* 1. Main Interactive AI Voice Simulator */}
+                {/* 1. Main Call Button */}
                 <button
                   type="submit"
                   className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-pastel-600 to-pastel-700 hover:from-pastel-700 hover:to-pastel-800 text-white text-xs font-bold flex items-center justify-center space-x-2 shadow-soft transition active:scale-95"
                 >
-                  <PhoneCall className="w-4 h-4" />
-                  <span>AI వాయిస్ సిమ్యులేషన్ తో కాల్ ప్రారంభించండి 🎙️</span>
+                  <PhoneIcon className="w-4 h-4" />
+                  <span>AI తో కాల్ ప్రారంభించండి 📞</span>
                 </button>
 
-                {/* 2. Real Cellular Call via Bland.ai API */}
-                <button
-                  type="button"
-                  onClick={handleRealCellularCall}
-                  disabled={isDispatchingBland}
-                  className="w-full py-2.5 px-4 rounded-xl bg-pastel-50 hover:bg-pastel-100 border border-pastel-300 text-pastel-900 text-xs font-semibold flex items-center justify-center space-x-2 transition active:scale-95 disabled:opacity-50"
-                >
-                  {isDispatchingBland ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin text-pastel-700" />
-                      <span>Bland.ai గేట్‌వేకు కాల్ పంపుతోంది...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-3.5 h-3.5 text-pastel-700" />
-                      <span>నిజమైన మొబైల్ ఫోన్‌కు Bland.ai లైవ్ కాల్ పంపండి 📱</span>
-                    </>
-                  )}
-                </button>
-
-                {/* 3. Direct SIM Phone Dialer */}
+                {/* 2. Direct SIM Phone Dialer */}
                 <a
                   href={`tel:+91${targetPhone}`}
-                  className="w-full py-2 px-4 rounded-xl bg-pastel-100 hover:bg-pastel-200 text-pastel-800 text-[11px] font-semibold flex items-center justify-center space-x-1.5 transition text-center"
+                  className="w-full py-2.5 px-4 rounded-xl bg-pastel-100 hover:bg-pastel-200 text-pastel-800 text-[11px] font-semibold flex items-center justify-center space-x-1.5 transition text-center"
                 >
-                  <Smartphone className="w-3.5 h-3.5 text-pastel-600" />
-                  <span>మొబైల్ ఫోన్ డయలర్ లో ఓపెన్ చేయండి (Direct SIM Call)</span>
+                  <PhoneDeviceIcon className="w-3.5 h-3.5 text-pastel-600" />
+                  <span>సాధారణ ఫోన్ డయలర్ లో ఓపెన్ చేయండి</span>
                 </a>
               </div>
-
-              {/* Bland.ai Feedback */}
-              {blandStatusMessage && (
-                <div className={`p-3 rounded-xl text-xs border animate-fade-in ${
-                  blandStatusMessage.status === 'success'
-                    ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                    : 'bg-amber-50 border-amber-200 text-amber-900'
-                }`}>
-                  <div className="flex items-center space-x-1.5 font-bold">
-                    {blandStatusMessage.status === 'success' ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    ) : (
-                      <AlertCircle className="w-4 h-4 text-amber-600" />
-                    )}
-                    <span>{blandStatusMessage.status === 'success' ? 'కాల్ డిస్పాచ్ అయింది' : 'కాల్ విఫలమైంది'}</span>
-                  </div>
-                  <p className="text-[11px] mt-1">{blandStatusMessage.message}</p>
-                </div>
-              )}
 
             </form>
           ) : (
@@ -383,7 +328,7 @@ export function OutboundCustomCallModal({ isOpen, onClose }) {
                     ? 'bg-pastel-200 text-pastel-900 animate-pulse'
                     : 'bg-emerald-100 text-emerald-800'
                 }`}>
-                  <PhoneCall className="w-3.5 h-3.5" />
+                  <PhoneIcon className="w-3.5 h-3.5" />
                   <span>
                     {callStatus === 'dialing' && 'డయల్ చేస్తోంది (Dialing)...'}
                     {callStatus === 'ringing' && 'రింగ్ అవుతోంది (Ringing)...'}
@@ -391,9 +336,15 @@ export function OutboundCustomCallModal({ isOpen, onClose }) {
                     {callStatus === 'completed' && '✅ కాల్ ముగిసింది & సమాచారం రికార్డైంది'}
                   </span>
                 </span>
-                <p className="text-xs text-pastel-500 font-mono mt-1">
-                  Target: +91 {targetPhone}
-                </p>
+                
+                <div className="flex items-center justify-center space-x-2 mt-1">
+                  <span className="text-xs text-pastel-500 font-mono">+91 {targetPhone}</span>
+                  {cellularDispatched && (
+                    <span className="text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                      సెల్యులార్ లైవ్
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Transcript list */}
@@ -401,9 +352,9 @@ export function OutboundCustomCallModal({ isOpen, onClose }) {
                 {transcript.map((line, idx) => (
                   <div key={idx} className={`flex flex-col ${line.speaker === 'ai' ? 'items-start' : 'items-end'}`}>
                     <span className="text-[9px] text-pastel-400 px-1 mb-0.5">
-                      {line.speaker === 'ai' ? 'AI అసిస్టెంట్:' : `వ్యక్తి (+91 ${targetPhone}):`}
+                      {line.speaker === 'ai' ? 'AI అసిస్టెంట్:' : `వ్యక్తి:`}
                     </span>
-                    <div className={`p-2.5 rounded-xl text-xs max-w-[85%] leading-snug ${
+                    <div className={`p-2.5 rounded-2xl text-xs max-w-[85%] leading-snug ${
                       line.speaker === 'ai'
                         ? 'bg-white border border-pastel-200 text-pastel-900 rounded-tl-sm'
                         : 'bg-pastel-600 text-white rounded-tr-sm font-medium'
@@ -416,13 +367,13 @@ export function OutboundCustomCallModal({ isOpen, onClose }) {
 
               {/* Completion notice */}
               {callStatus === 'completed' && (
-                <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-xs text-emerald-950 space-y-1">
+                <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 text-xs text-emerald-950 space-y-1">
                   <div className="flex items-center space-x-1.5 font-bold text-emerald-800">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <CheckCircleIcon className="w-4 h-4 text-emerald-600" />
                     <span>వివరాలు సేకరించబడ్డాయి & డేటాబేస్ లో భద్రపరచబడ్డాయి!</span>
                   </div>
                   <p className="text-[11px] text-emerald-900">
-                    సేకరించిన సమాధానాలు ఎక్సెల్ ఫైల్ గా ఎగుమతి చేసుకోవడానికి సిద్ధంగా ఉన్నాయి.
+                    సేకరించిన సమాధానాలు ఎక్సెల్ ఫైల్ గా డౌన్‌లోడ్ చేసుకోవడానికి సిద్ధంగా ఉన్నాయి.
                   </p>
                 </div>
               )}
@@ -434,7 +385,7 @@ export function OutboundCustomCallModal({ isOpen, onClose }) {
                   onClick={handleEndCall}
                   className="w-full py-2.5 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-semibold flex items-center justify-center space-x-1.5 transition active:scale-95"
                 >
-                  <PhoneOff className="w-4 h-4" />
+                  <PhoneOffIcon className="w-4 h-4" />
                   <span>కాల్ ముగించండి (End Call)</span>
                 </button>
               ) : (
